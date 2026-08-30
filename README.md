@@ -28,6 +28,12 @@ Meet [Plane](https://plane.so/), an open-source project management tool to track
 
 > Plane is evolving every day. Your suggestions, ideas, and reported bugs help us immensely. Do not hesitate to join in the conversation on [Forum](https://forum.plane.so) or raise a GitHub issue. We read everything and respond to most.
 
+> **Unofficial community fork.** This repository is not affiliated with or endorsed by the Plane project. It extends the upstream AGPL-3.0 codebase while preserving the original attribution and license notices.
+
+## About this fork
+
+This fork follows the upstream `preview` branch and keeps Plane's standard deployment stack with custom enhancements.
+
 ## 🚀 Installation
 
 Getting started with Plane is simple. Choose the setup that works best for you:
@@ -163,4 +169,12 @@ Please read [CONTRIBUTING.md](https://github.com/makeplane/plane/blob/master/CON
 
 ## License
 
-This project is licensed under the [GNU Affero General Public License v3.0](https://github.com/makeplane/plane/blob/master/LICENSE.txt).
+This project is licensed under the [GNU Affero General Public License v3.0](./LICENSE.txt).
+
+### Fork notice
+
+This repository is a community-maintained fork of [Plane](https://github.com/makeplane/plane). **Modification notice (2026-08-30):** this fork contains modifications and additions to the upstream codebase. Changes to AGPL-covered code are distributed under the GNU Affero General Public License v3.0, with the original copyright and license notices preserved.
+
+Upstream source: [makeplane/plane](https://github.com/makeplane/plane) · Fork source: [wysentanu/plane](https://github.com/wysentanu/plane)
+
+When a modified version is offered as a network service, the corresponding source for the running version must be made available to users as required by section 13 of the AGPL.
