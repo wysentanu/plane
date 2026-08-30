@@ -8,7 +8,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useState } from "react";
 import { observer } from "mobx-react";
 // plane imports
-import { estimateCount } from "@plane/constants";
+import { EEstimateSystem, estimateCount } from "@plane/constants";
 import { Button } from "@plane/propel/button";
 import { PlusIcon } from "@plane/propel/icons";
 import type { TEstimatePointsObject, TEstimateSystemKeys, TEstimateTypeError } from "@plane/types";
@@ -102,7 +102,10 @@ export const EstimatePointCreateRoot = observer(function EstimatePointCreateRoot
   };
 
   const handleCreate = () => {
-    if (estimatePoints && estimatePoints.length + (estimatePointCreate?.length || 0) <= estimateCount.max - 1) {
+    if (
+      estimateType === EEstimateSystem.TIME ||
+      (estimatePoints && estimatePoints.length + (estimatePointCreate?.length || 0) <= estimateCount.max - 1)
+    ) {
       const currentKey = estimatePoints.length + (estimatePointCreate?.length || 0) + 1;
       handleEstimatePointCreate("add", {
         id: undefined,
@@ -170,7 +173,8 @@ export const EstimatePointCreateRoot = observer(function EstimatePointCreateRoot
             }
           />
         ))}
-      {estimatePoints && estimatePoints.length + (estimatePointCreate?.length || 0) <= estimateCount.max - 1 && (
+      {(estimateType === EEstimateSystem.TIME ||
+        (estimatePoints && estimatePoints.length + (estimatePointCreate?.length || 0) <= estimateCount.max - 1)) && (
         <Button variant="link" prependIcon={<PlusIcon />} onClick={handleCreate}>
           Add {estimateType}
         </Button>

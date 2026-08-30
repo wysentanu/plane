@@ -12,7 +12,7 @@ import { EEstimateSystem, estimateCount } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EditIcon, TrashIcon } from "@plane/propel/icons";
 import type { TEstimatePointsObject, TEstimateSystemKeys, TEstimateTypeErrorObject } from "@plane/types";
-import { convertMinutesToHoursMinutesString } from "@plane/utils";
+import { formatEstimateTime } from "@plane/utils";
 // local imports
 import { EstimatePointUpdate } from "./update";
 
@@ -73,7 +73,7 @@ export const EstimatePointItemPreview = observer(function EstimatePointItemPrevi
           </div>
           <div ref={EstimatePointValueRef} className="w-full py-2 text-13">
             {estimatePoint?.value ? (
-              `${estimateType === EEstimateSystem.TIME ? convertMinutesToHoursMinutesString(Number(estimatePoint?.value)) : estimatePoint?.value}`
+              `${estimateType === EEstimateSystem.TIME ? formatEstimateTime(estimatePoint?.value) : estimatePoint?.value}`
             ) : (
               <span className="text-placeholder">{t("project_settings.estimates.create.enter_estimate_point")}</span>
             )}

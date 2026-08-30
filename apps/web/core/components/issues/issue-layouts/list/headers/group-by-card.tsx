@@ -30,6 +30,7 @@ interface IHeaderGroupByCard {
   icon?: React.ReactNode;
   title: string;
   count: number;
+  estimateTotal?: string;
   issuePayload: Partial<TIssue>;
   canEditProperties: (projectId: string | undefined) => boolean;
   disableIssueCreation?: boolean;
@@ -45,6 +46,7 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
     icon,
     title,
     count,
+    estimateTotal,
     issuePayload,
     canEditProperties,
     disableIssueCreation,
@@ -119,6 +121,10 @@ export const HeaderGroupByCard = observer(function HeaderGroupByCard(props: IHea
           <div className="pl-2 text-13 font-medium text-tertiary">{count || 0}</div>
           <div className="px-2.5"></div>
         </div>
+
+        {estimateTotal !== undefined && (
+          <div className="flex-shrink-0 text-13 font-medium text-tertiary">{estimateTotal}</div>
+        )}
 
         {!disableIssueCreation &&
           (renderExistingIssueModal ? (

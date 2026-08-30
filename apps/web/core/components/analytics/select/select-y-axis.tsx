@@ -32,7 +32,8 @@ export const SelectYAxis = observer(function SelectYAxis({ value, onChange, hidd
         projectId &&
         currentActiveEstimateId &&
         areEstimateEnabledByProjectId(projectId.toString()) &&
-        estimateById(currentActiveEstimateId)?.type === EEstimateSystem.POINTS
+        estimateById(currentActiveEstimateId)?.type &&
+        estimateById(currentActiveEstimateId)?.type !== EEstimateSystem.CATEGORIES
       ) {
         return true;
       } else {

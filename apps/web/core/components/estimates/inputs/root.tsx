@@ -22,16 +22,11 @@ export function EstimateInputRoot(props: TEstimateInputRootProps) {
 
   switch (estimateType) {
     case EEstimateSystem.POINTS:
-      return (
-        <EstimateNumberInput
-          value={value ? parseFloat(value) : undefined}
-          handleEstimateInputValue={handleEstimateInputValue}
-        />
-      );
+      return <EstimateNumberInput value={value} handleEstimateInputValue={handleEstimateInputValue} />;
     case EEstimateSystem.CATEGORIES:
       return <EstimateTextInput value={value} handleEstimateInputValue={handleEstimateInputValue} />;
     case EEstimateSystem.TIME:
-      return <></>;
+      return <EstimateNumberInput value={value} handleEstimateInputValue={handleEstimateInputValue} step={0.5} />;
     default:
       return null;
   }

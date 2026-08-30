@@ -7,7 +7,7 @@
 import { observer } from "mobx-react";
 // plane imports
 import { EEstimateSystem } from "@plane/constants";
-import { convertMinutesToHoursMinutesString } from "@plane/utils";
+import { formatEstimateTime } from "@plane/utils";
 // components
 import { EstimateListItemButtons } from "./estimate-list-item-buttons";
 import { SettingsBoxedControlItem } from "@/components/settings/boxed-control-item";
@@ -44,7 +44,7 @@ export const EstimateListItem = observer(function EstimateListItem(props: TEstim
       description={estimatePointValues
         ?.map((estimatePointValue) => {
           if (currentEstimate.type === EEstimateSystem.TIME) {
-            return convertMinutesToHoursMinutesString(Number(estimatePointValue));
+            return formatEstimateTime(estimatePointValue);
           }
           return estimatePointValue;
         })

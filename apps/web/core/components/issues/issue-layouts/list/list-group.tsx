@@ -21,15 +21,17 @@ import type {
   TIssue,
   IIssueDisplayProperties,
   TIssueKanbanFilters,
+  TEstimateSystemKeys,
 } from "@plane/types";
-import { EIssueLayoutTypes } from "@plane/types";
+import { EEstimateSystem, EIssueLayoutTypes } from "@plane/types";
 import { Row } from "@plane/ui";
-import { cn } from "@plane/utils";
+import { cn, formatEstimateTime } from "@plane/utils";
 // components
 import { ListLoaderItemRow } from "@/components/ui/loader/layouts/list-layout-loader";
 import { useWorkFlowFDragNDrop } from "@/components/workflow";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useIssuesStore } from "@/hooks/use-issue-layout-store";
 import type { TSelectionHelper } from "@/hooks/use-multiple-select";
@@ -106,6 +108,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
   const groupRef = useRef<HTMLDivElement | null>(null);
   const { t } = useTranslation();
   const projectState = useProjectState();
+  const { currentActiveEstimateIdByProjectId, getEstimateById } = useProjectEstimates();
 
   const {
     issues: { getGroupIssueCount, getPaginationData, getIssueLoader },
@@ -127,6 +130,33 @@ export const ListGroup = observer(function ListGroup(props: Props) {
     nextPageResults === undefined && groupIssueCount !== undefined && groupIssueIds
       ? groupIssueIds.length < groupIssueCount
       : !!nextPageResults;
+
+  const estimateSummary = groupIssueIds.reduce(
+    (summary, issueId) => {
+      const issue = issuesMap[issueId];
+      const estimateId = issue?.project_id ? currentActiveEstimateIdByProjectId(issue.project_id) : undefined;
+      const estimate = estimateId ? getEstimateById(estimateId) : undefined;
+
+      if (estimate?.type) {
+        if (summary.type && summary.type !== estimate.type) summary.mixed = true;
+        summary.type ??= estimate.type;
+      }
+
+      const estimatePoint = issue?.estimate_point ? estimate?.estimatePointById(issue.estimate_point) : undefined;
+      const value = Number(estimatePoint?.value);
+      if (Number.isFinite(value)) summary.total += value;
+
+      return summary;
+    },
+    { total: 0, type: undefined as TEstimateSystemKeys | undefined, mixed: false }
+  );
+
+  const estimateTotal =
+    !estimateSummary.mixed && estimateSummary.type === EEstimateSystem.TIME
+      ? formatEstimateTime(Number(estimateSummary.total.toFixed(10)))
+      : !estimateSummary.mixed && estimateSummary.type === EEstimateSystem.POINTS
+        ? String(Number(estimateSummary.total.toFixed(10)))
+        : undefined;
 
   const loadMore = isPaginating ? (
     <ListLoaderItemRow />
@@ -274,6 +304,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
           icon={group.icon}
           title={group.name}
           count={groupIssueCount}
+          estimateTotal={estimateTotal}
           issuePayload={group.payload}
           canEditProperties={canEditProperties}
           disableIssueCreation={

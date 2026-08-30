@@ -15,7 +15,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Tooltip } from "@plane/propel/tooltip";
 import type { TEstimatePointsObject, TEstimateSystemKeys, TEstimateTypeErrorObject } from "@plane/types";
 import { Spinner } from "@plane/ui";
-import { cn, isEstimatePointValuesRepeated } from "@plane/utils";
+import { cn, isEstimatePointValuesRepeated, isValidEstimatePointValue } from "@plane/utils";
 import { EstimateInputRoot } from "@/components/estimates/inputs/root";
 // helpers
 // hooks
@@ -95,12 +95,12 @@ export const EstimatePointCreate = observer(function EstimatePointCreate(props: 
 
       if (!isRepeated) {
         if (currentEstimateType && [EEstimateSystem.TIME, EEstimateSystem.POINTS].includes(currentEstimateType)) {
-          if (estimateInputValue && !isNaN(Number(estimateInputValue))) {
+          if (estimateInputValue && Number.isFinite(Number(estimateInputValue))) {
             if (Number(estimateInputValue) <= 0) {
               if (handleEstimatePointError)
                 handleEstimatePointError(estimateInputValue, t("project_settings.estimates.validation.min_length"));
               return;
-            } else {
+            } else if (isValidEstimatePointValue(estimateInputValue, currentEstimateType)) {
               isEstimateValid = true;
             }
           }

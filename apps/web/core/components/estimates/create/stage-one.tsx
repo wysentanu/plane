@@ -12,7 +12,7 @@ import { Tooltip } from "@plane/propel/tooltip";
 import type { TEstimateSystemKeys } from "@plane/types";
 // helpers
 import { isEstimateSystemEnabled } from "./helper";
-import { convertMinutesToHoursMinutesString } from "@plane/utils";
+import { formatEstimateTime } from "@plane/utils";
 // components
 import { UpgradeBadge } from "@/components/workspace/upgrade-badge";
 import { RadioInput } from "../radio-select";
@@ -107,7 +107,7 @@ export function EstimateCreateStageOne(props: TEstimateCreateStageOne) {
                       {currentEstimateSystem.templates[name]?.values
                         ?.map((template) =>
                           estimateSystem === (EEstimateSystem.TIME as TEstimateSystemKeys)
-                            ? convertMinutesToHoursMinutesString(Number(template.value)).trim()
+                            ? formatEstimateTime(template.value)
                             : template.value
                         )
                         ?.join(", ")}

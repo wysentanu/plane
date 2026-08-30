@@ -7,6 +7,23 @@
 // plane web constants
 import { EEstimateSystem } from "@plane/constants";
 
+export const isValidEstimatePointValue = (value: string, estimateType: EEstimateSystem): boolean => {
+  const numericValue = Number(value);
+
+  return (
+    Number.isFinite(numericValue) &&
+    numericValue > 0 &&
+    (estimateType !== EEstimateSystem.TIME || Number.isInteger(numericValue * 2))
+  );
+};
+
+export const formatEstimateTime = (value: string | number | undefined | null): string => {
+  if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) return "";
+
+  const hours = Number(value);
+  return Number.isFinite(hours) ? `${hours}h` : "";
+};
+
 export const isEstimatePointValuesRepeated = (
   estimatePoints: string[],
   estimateType: EEstimateSystem,

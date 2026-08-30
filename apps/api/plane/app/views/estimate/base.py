@@ -17,6 +17,7 @@ from rest_framework import status
 from ..base import BaseViewSet, BaseAPIView
 from plane.app.permissions import ProjectEntityPermission, allow_permission, ROLE
 from plane.db.models import Project, Estimate, EstimatePoint, Issue
+from plane.db.models.estimate import EstimateType
 from plane.app.serializers import (
     EstimateSerializer,
     EstimatePointSerializer,
@@ -24,6 +25,7 @@ from plane.app.serializers import (
 )
 from plane.utils.cache import invalidate_cache
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.utils.estimates import is_valid_time_estimate_value
 
 
 def generate_random_name(length=10):
@@ -66,18 +68,20 @@ class BulkEstimatePointEndpoint(BaseViewSet):
         estimate_name = estimate.get("name", generate_random_name())
         estimate_type = estimate.get("type", "categories")
         last_used = estimate.get("last_used", False)
+        estimate_points = request.data.get("estimate_points", [])
+
+        serializer = EstimatePointSerializer(
+            data=request.data.get("estimate_points"), many=True, context={"estimate_type": estimate_type}
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         estimate = Estimate.objects.create(
             name=estimate_name,
             project_id=project_id,
             last_used=last_used,
             type=estimate_type,
         )
-
-        estimate_points = request.data.get("estimate_points", [])
-
-        serializer = EstimatePointSerializer(data=request.data.get("estimate_points"), many=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         estimate_points = EstimatePoint.objects.bulk_create(
             [
@@ -121,6 +125,18 @@ class BulkEstimatePointEndpoint(BaseViewSet):
             estimate.save()
 
         estimate_points_data = request.data.get("estimate_points", [])
+
+        if estimate.type == EstimateType.TIME:
+            if any(
+                "value" in estimate_point
+                and estimate_point.get("value") not in (None, "")
+                and not is_valid_time_estimate_value(estimate_point.get("value"))
+                for estimate_point in estimate_points_data
+            ):
+                return Response(
+                    {"error": "Time estimates must be positive values in 0.5-hour increments"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         estimate_points = EstimatePoint.objects.filter(
             pk__in=[estimate_point.get("id") for estimate_point in estimate_points_data],
@@ -172,6 +188,11 @@ class EstimatePointEndpoint(BaseViewSet):
             )
         key = request.data.get("key", 0)
         value = request.data.get("value", "")
+        if estimate.type == EstimateType.TIME and not is_valid_time_estimate_value(value):
+            return Response(
+                {"error": "Time estimates must be positive values in 0.5-hour increments"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         estimate_point = EstimatePoint.objects.create(
             estimate_id=estimate_id, project_id=project_id, key=key, value=value
         )

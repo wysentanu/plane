@@ -9,7 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 import { EstimatePropertyIcon } from "@plane/propel/icons";
 import { EEstimateSystem } from "@plane/types";
-import { cn, convertMinutesToHoursMinutesString } from "@plane/utils";
+import { cn, formatEstimateTime } from "@plane/utils";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useEstimate } from "@/hooks/store/estimates/use-estimate";
@@ -37,7 +37,7 @@ export const ReadonlyEstimate = observer(function ReadonlyEstimate(props: TReado
 
   const displayValue = estimatePoint
     ? currentActiveEstimate?.type === EEstimateSystem.TIME
-      ? convertMinutesToHoursMinutesString(Number(estimatePoint.value))
+      ? formatEstimateTime(estimatePoint.value)
       : estimatePoint.value
     : null;
 

@@ -13,12 +13,18 @@ from .project import ProjectBaseModel
 class EstimateType(models.TextChoices):
     CATEGORIES = "categories", "Categories"
     POINTS = "points", "Points"
+    TIME = "time", "Time"
 
 
 class Estimate(ProjectBaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(verbose_name="Estimate Description", blank=True)
-    type = models.CharField(max_length=255, choices=EstimateType.choices, default=EstimateType.CATEGORIES)
+    # Keep the upstream model state stable; the existing varchar stores the fork-only `time` value.
+    type = models.CharField(
+        max_length=255,
+        choices=[("categories", "Categories"), ("points", "Points")],
+        default=EstimateType.CATEGORIES,
+    )
     last_used = models.BooleanField(default=False)
 
     def __str__(self):
