@@ -18,7 +18,6 @@ export const BUSINESS_PLAN_FEATURES = [
   "Workflows + Approvals",
   "Decision + Loops Automation",
   "Custom Reports",
-  "Nested Pages",
   "Intake Forms",
 ];
 

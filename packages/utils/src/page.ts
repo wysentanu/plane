@@ -25,6 +25,8 @@ import { satisfiesDateFilter } from "./filter";
  */
 export const filterPagesByPageType = (pageType: TPageNavigationTabs, pages: TPage[]): TPage[] =>
   pages.filter((page) => {
+    // child pages render inside their parent's expanded tree, never at the root level
+    if (page.parent) return false;
     if (pageType === "public") return page.access === 0 && !page.archived_at;
     if (pageType === "private") return page.access === 1 && !page.archived_at;
     if (pageType === "archived") return page.archived_at;
@@ -48,15 +50,15 @@ export const orderPages = (
 
   if (sortByKey === "name") {
     orderedPages = sortBy(pages, [(m) => m.name?.toLowerCase()]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    if (sortByOrder === "desc") orderedPages = orderedPages.toReversed();
   }
   if (sortByKey === "created_at") {
     orderedPages = sortBy(pages, [(m) => m.created_at]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    if (sortByOrder === "desc") orderedPages = orderedPages.toReversed();
   }
   if (sortByKey === "updated_at") {
     orderedPages = sortBy(pages, [(m) => m.updated_at]);
-    if (sortByOrder === "desc") orderedPages = orderedPages.reverse();
+    if (sortByOrder === "desc") orderedPages = orderedPages.toReversed();
   }
 
   return orderedPages;

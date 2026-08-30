@@ -39,6 +39,10 @@ export interface IProjectPageStore {
   data: Record<string, TProjectPage>; // pageId => Page
   error: TError | undefined;
   filters: TPageFilters;
+  // pageId => direct child page ids (fetched lazily on expand)
+  childPageIds: Record<string, string[]>;
+  // pageIds for which children are being fetched
+  childLoader: Record<string, boolean>;
   // computed
   isAnyPageAvailable: boolean;
   canCurrentUserCreatePage: boolean;
@@ -62,6 +66,8 @@ export interface IProjectPageStore {
     options?: { trackVisit?: boolean }
   ) => Promise<TPage | undefined>;
   createPage: (pageData: Partial<TPage>) => Promise<TPage | undefined>;
+  fetchPageChildren: (workspaceSlug: string, projectId: string, pageId: string) => Promise<TPage[] | undefined>;
+  getChildPageIds: (pageId: string) => string[] | undefined;
   removePage: (params: { pageId: string; shouldSync?: boolean }) => Promise<void>;
   movePage: (workspaceSlug: string, projectId: string, pageId: string, newProjectId: string) => Promise<void>;
 }
@@ -76,6 +82,10 @@ export class ProjectPageStore implements IProjectPageStore {
     sortKey: "updated_at",
     sortBy: "desc",
   };
+  // pageId => direct child page ids (fetched lazily on expand)
+  childPageIds: Record<string, string[]> = {};
+  // pageIds for which children are being fetched
+  childLoader: Record<string, boolean> = {};
   // service
   service: ProjectPageService;
   rootStore: CoreRootStore;
@@ -87,6 +97,8 @@ export class ProjectPageStore implements IProjectPageStore {
       data: observable,
       error: observable,
       filters: observable,
+      childPageIds: observable,
+      childLoader: observable,
       // computed
       isAnyPageAvailable: computed,
       canCurrentUserCreatePage: computed,
@@ -97,6 +109,8 @@ export class ProjectPageStore implements IProjectPageStore {
       fetchPagesList: action,
       fetchPageDetails: action,
       createPage: action,
+      fetchPageChildren: action,
+      getChildPageIds: false,
       removePage: action,
       movePage: action,
     });
@@ -367,4 +381,50 @@ export class ProjectPageStore implements IProjectPageStore {
       throw error;
     }
   };
+
+  /**
+   * @description fetch direct child pages of a page and register them
+   * @param {string} workspaceSlug
+   * @param {string} projectId
+   * @param {string} pageId
+   */
+  fetchPageChildren = async (workspaceSlug: string, projectId: string, pageId: string) => {
+    try {
+      runInAction(() => {
+        set(this.childLoader, [pageId], true);
+      });
+
+      const pages = await this.service.fetchChildren(workspaceSlug, projectId, pageId);
+      runInAction(() => {
+        for (const page of pages) {
+          if (page?.id) {
+            const existingPage = this.getPageById(page.id);
+            if (existingPage) {
+              const { name, ...otherFields } = page;
+              existingPage.mutateProperties(otherFields, false);
+            } else {
+              set(this.data, [page.id], new ProjectPage(this.store, page));
+            }
+          }
+        }
+        set(
+          this.childPageIds,
+          [pageId],
+          pages.map((p) => p.id).filter((id): id is string => !!id)
+        );
+      });
+
+      return pages;
+    } finally {
+      runInAction(() => {
+        set(this.childLoader, [pageId], false);
+      });
+    }
+  };
+
+  /**
+   * @description get fetched direct child page ids of a page
+   * @param {string} pageId
+   */
+  getChildPageIds = (pageId: string): string[] | undefined => this.childPageIds?.[pageId];
 }

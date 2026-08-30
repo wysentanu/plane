@@ -94,7 +94,6 @@ class PageViewSet(BaseViewSet):
                 projects__project_projectmember__is_active=True,
                 projects__archived_at__isnull=True,
             )
-            .filter(parent__isnull=True)
             .filter(Q(owned_by=self.request.user) | Q(access=0))
             .prefetch_related("projects")
             .select_related("workspace")
@@ -120,6 +119,12 @@ class PageViewSet(BaseViewSet):
                 project_ids=Coalesce(
                     ArrayAgg("projects__id", distinct=True, filter=~Q(projects__id=True)),
                     Value([], output_field=ArrayField(UUIDField())),
+                ),
+                # number of direct child pages; used by the UI to show an expand affordance
+                sub_pages_count=Count(
+                    "child_page",
+                    distinct=True,
+                    filter=Q(child_page__project_pages__deleted_at__isnull=True),
                 ),
             )
             .filter(project=True)
@@ -165,12 +170,27 @@ class PageViewSet(BaseViewSet):
 
             parent = request.data.get("parent", None)
             if parent:
-                _ = Page.objects.get(
+                if str(parent) == str(page_id):
+                    return Response(
+                        {"error": "A page cannot be its own parent"}, status=status.HTTP_400_BAD_REQUEST
+                    )
+                parent_page = Page.objects.get(
                     pk=parent,
                     workspace__slug=slug,
                     projects__id=project_id,
                     project_pages__deleted_at__isnull=True,
                 )
+                # reject reparenting under a descendant: it would create a cycle
+                cursor_parent = parent_page.parent_id
+                while cursor_parent:
+                    if str(cursor_parent) == str(page_id):
+                        return Response(
+                            {"error": "A page cannot be moved under one of its own child pages"},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    cursor_parent = (
+                        Page.objects.filter(pk=cursor_parent).values_list("parent_id", flat=True).first()
+                    )
 
             # Only update access if the page owner is the requesting  user
             if page.access != request.data.get("access", page.access) and page.owned_by_id != request.user.id:
@@ -289,7 +309,8 @@ class PageViewSet(BaseViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def list(self, request, slug, project_id):
-        queryset = self.get_queryset()
+        # the main list stays roots-only; children are fetched via the children endpoint
+        queryset = self.get_queryset().filter(parent__isnull=True)
         project = Project.objects.get(pk=project_id)
         if (
             ProjectMember.objects.filter(
@@ -637,3 +658,64 @@ class PageDuplicateEndpoint(BaseAPIView):
         )
         serializer = PageDetailSerializer(page)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PageChildrenEndpoint(BaseAPIView):
+    """Direct child pages of a page, with the same shape as the pages list."""
+
+    permission_classes = [ProjectPagePermission]
+
+    def get(self, request, slug, project_id, page_id):
+        # validate the parent page exists and is accessible in this project
+        parent_page = (
+            Page.objects.filter(
+                pk=page_id,
+                workspace__slug=slug,
+                projects__id=project_id,
+                project_pages__deleted_at__isnull=True,
+            )
+            .filter(Q(owned_by=request.user) | Q(access=0))
+            .first()
+        )
+        if parent_page is None:
+            return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        subquery = UserFavorite.objects.filter(
+            user=request.user,
+            entity_type="page",
+            entity_identifier=OuterRef("pk"),
+            workspace__slug=slug,
+        )
+        children = (
+            Page.objects.filter(
+                parent_id=page_id,
+                workspace__slug=slug,
+                projects__id=project_id,
+                project_pages__deleted_at__isnull=True,
+            )
+            .filter(Q(owned_by=request.user) | Q(access=0))
+            .annotate(is_favorite=Exists(subquery))
+            .annotate(
+                label_ids=Coalesce(
+                    ArrayAgg(
+                        "page_labels__label_id",
+                        distinct=True,
+                        filter=~Q(page_labels__label_id__isnull=True),
+                    ),
+                    Value([], output_field=ArrayField(UUIDField())),
+                ),
+                project_ids=Coalesce(
+                    ArrayAgg("projects__id", distinct=True, filter=~Q(projects__id=True)),
+                    Value([], output_field=ArrayField(UUIDField())),
+                ),
+                sub_pages_count=Count(
+                    "child_page",
+                    distinct=True,
+                    filter=Q(child_page__project_pages__deleted_at__isnull=True),
+                ),
+            )
+            .distinct()
+            .order_by("-created_at")
+        )
+        serializer = PageSerializer(children, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

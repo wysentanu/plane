@@ -11,6 +11,7 @@ from plane.app.views import (
     PagesDescriptionViewSet,
     PageVersionEndpoint,
     PageDuplicateEndpoint,
+    PageChildrenEndpoint,
 )
 
 urlpatterns = [
@@ -28,6 +29,12 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/",
         PageViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
         name="project-pages",
+    ),
+    # child pages
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/children/",
+        PageChildrenEndpoint.as_view(),
+        name="project-page-children",
     ),
     # favorite pages
     path(

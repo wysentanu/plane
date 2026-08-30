@@ -921,13 +921,12 @@ export const PLANS_COMPARISON_LIST: TPlansComparisonDetails[] = [
       {
         title: "Nested Pages",
         description: "Pages inside a page, organize your pages\nas you see fit for the progressive\ndisclosure.",
-        comingSoon: true,
         cloud: {
-          free: false,
-          one: false,
-          pro: false,
-          business: "Word-compatible + other format downloads",
-          enterprise: "Word-compatible + other format downloads",
+          free: true,
+          one: true,
+          pro: true,
+          business: true,
+          enterprise: true,
         },
       },
     ],

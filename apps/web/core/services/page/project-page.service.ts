@@ -57,6 +57,14 @@ export class ProjectPageService extends APIService {
       });
   }
 
+  async fetchChildren(workspaceSlug: string, projectId: string, pageId: string): Promise<TPage[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/pages/${pageId}/children/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   async updateAccess(
     workspaceSlug: string,
     projectId: string,
