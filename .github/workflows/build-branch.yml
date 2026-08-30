@@ -77,10 +77,10 @@ jobs:
         name: Set Environment Variables
         run: |
           if [ "${{ env.ARM64_BUILD }}" == "true" ] || ([ "${{ env.BUILD_TYPE }}" == "Release" ] && [ "${{ env.IS_PRERELEASE }}" != "true" ]); then
-            echo "BUILDX_DRIVER=cloud" >> $GITHUB_OUTPUT
-            echo "BUILDX_VERSION=lab:latest" >> $GITHUB_OUTPUT
+            echo "BUILDX_DRIVER=docker-container" >> $GITHUB_OUTPUT
+            echo "BUILDX_VERSION=latest" >> $GITHUB_OUTPUT
             echo "BUILDX_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
-            echo "BUILDX_ENDPOINT=makeplane/plane-dev" >> $GITHUB_OUTPUT
+            echo "BUILDX_ENDPOINT=" >> $GITHUB_OUTPUT
           else
             echo "BUILDX_DRIVER=docker-container" >> $GITHUB_OUTPUT
             echo "BUILDX_VERSION=latest" >> $GITHUB_OUTPUT
@@ -141,6 +141,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Admin Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -163,6 +166,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Web Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -185,6 +191,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Space Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -207,6 +216,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Live Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -229,6 +241,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Backend Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -251,6 +266,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [branch_build_setup]
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Proxy Build and Push
         uses: makeplane/actions/build-push@v1.4.0
         with:
@@ -281,6 +299,9 @@ jobs:
       - branch_build_push_api
       - branch_build_push_proxy
     steps:
+      - name: Set up QEMU
+        if: ${{ contains(needs.branch_build_setup.outputs.gh_buildx_platforms, 'arm64') }}
+        uses: docker/setup-qemu-action@v4
       - name: Checkout Files
         uses: actions/checkout@v6
 
